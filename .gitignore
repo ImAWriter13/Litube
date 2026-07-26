@@ -9,6 +9,7 @@
 *.log
 *.apk
 *.patch
+*.jks
 
 /.idea/
 /.vscode/

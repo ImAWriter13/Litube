@@ -30,8 +30,18 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = rootProject.file("litube.jks")
+            storePassword = System.getenv("STORE_PASSWORD") ?: "litube123"
+            keyAlias = System.getenv("KEY_ALIAS") ?: "litube"
+            keyPassword = System.getenv("KEY_PASSWORD") ?: "litube123"
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
