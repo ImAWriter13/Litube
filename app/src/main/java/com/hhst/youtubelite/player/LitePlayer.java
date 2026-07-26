@@ -512,14 +512,15 @@ public class LitePlayer {
 						});
 	}
 
-	public void onPictureInPictureModeChanged(boolean isInPiP) {
-		controller.onPictureInPictureModeChanged(isInPiP);
-		if (!isInPiP) {
-			playerView.disableAutoPiP();
-			if (extensionManager.isEnabled(Constant.ENABLE_HOME_BUTTON_PIP) && engine.isPlaying()) {
-				playerView.enableAutoPiP();
-			}
-		}
+    public void onPictureInPictureModeChanged(boolean isInPiP) {
+        controller.onPictureInPictureModeChanged(isInPiP);
+        if (!isInPiP) {
+            engine.pause();
+            playerView.disableAutoPiP();
+            if (extensionManager.isEnabled(Constant.ENABLE_HOME_BUTTON_PIP) && engine.isPlaying()) {
+                playerView.enableAutoPiP();
+            }
+        }
 		if (wasInPip && !isInPiP && inMiniPlayer && onRestore != null) {
 			onRestore.run();
 		}
