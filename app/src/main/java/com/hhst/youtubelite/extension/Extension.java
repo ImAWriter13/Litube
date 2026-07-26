@@ -1,6 +1,7 @@
 package com.hhst.youtubelite.extension;
 
 import static com.hhst.youtubelite.Constant.ENABLE_BACKGROUND_PLAY;
+import static com.hhst.youtubelite.Constant.ENABLE_HOME_BUTTON_PIP;
 import static com.hhst.youtubelite.Constant.ENABLE_IN_APP_MINI_PLAYER;
 import static com.hhst.youtubelite.Constant.ENABLE_PIP;
 import static com.hhst.youtubelite.Constant.REMEMBER_LAST_POSITION;
@@ -66,6 +67,7 @@ public record Extension(String key, int title, int summary, int icon, List<Exten
 						)),
 						page(R.string.background_mini_player, R.string.background_mini_player_summary, R.drawable.ic_pip, List.of(
 										toggle(ENABLE_PIP, R.string.pip),
+										toggle(ENABLE_HOME_BUTTON_PIP, R.string.home_button_pip),
 										toggle(ENABLE_IN_APP_MINI_PLAYER, R.string.in_app_mini_player),
 										toggle(ENABLE_BACKGROUND_PLAY, R.string.background_play)
 						)),

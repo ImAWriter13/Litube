@@ -11,8 +11,10 @@ import androidx.media3.common.Tracks;
 import androidx.media3.common.util.UnstableApi;
 import androidx.media3.ui.DefaultTimeBar;
 
+import com.hhst.youtubelite.Constant;
 import com.hhst.youtubelite.PlaybackService;
 import com.hhst.youtubelite.R;
+import com.hhst.youtubelite.extension.ExtensionManager;
 import com.hhst.youtubelite.extractor.ExtractionSession;
 import com.hhst.youtubelite.extractor.PlaybackMode;
 import com.hhst.youtubelite.extractor.PlaybackDetails;
@@ -82,6 +84,8 @@ public class LitePlayer {
 	@NonNull
 	private final PlayerPreferences prefs;
 	@NonNull
+	private final ExtensionManager extensionManager;
+	@NonNull
 	private final PlayerStateStore stateStore;
 	@NonNull
 	private final Executor executor;
@@ -116,7 +120,8 @@ public class LitePlayer {
 	                  @NonNull QueueRepository queueRepo,
 	                  @NonNull PlayerPreferences prefs,
 	                  @NonNull PlayerStateStore stateStore,
-	                  @NonNull Executor executor) {
+	                  @NonNull Executor executor,
+	                  @NonNull ExtensionManager extensionManager) {
 		this.activity = activity;
 		this.extractor = extractor;
 		this.playerView = playerView;
@@ -127,6 +132,7 @@ public class LitePlayer {
 		this.prefs = prefs;
 		this.stateStore = stateStore;
 		this.executor = executor;
+		this.extensionManager = extensionManager;
 		playerView.setup();
 		queueRepo.addListener(queueListener);
 		setupEngineListeners();
@@ -157,6 +163,11 @@ public class LitePlayer {
 			@Override
 			public void onIsPlayingChanged(boolean isPlaying) {
 				updateServiceProgress(isPlaying);
+				if (isPlaying && extensionManager.isEnabled(Constant.ENABLE_HOME_BUTTON_PIP)) {
+					playerView.enableAutoPiP();
+				} else if (!isPlaying) {
+					playerView.disableAutoPiP();
+				}
 			}
 
 			@Override
@@ -503,7 +514,12 @@ public class LitePlayer {
 
 	public void onPictureInPictureModeChanged(boolean isInPiP) {
 		controller.onPictureInPictureModeChanged(isInPiP);
-		if (!isInPiP) playerView.disableAutoPiP();
+		if (!isInPiP) {
+			playerView.disableAutoPiP();
+			if (extensionManager.isEnabled(Constant.ENABLE_HOME_BUTTON_PIP) && engine.isPlaying()) {
+				playerView.enableAutoPiP();
+			}
+		}
 		if (wasInPip && !isInPiP && inMiniPlayer && onRestore != null) {
 			onRestore.run();
 		}

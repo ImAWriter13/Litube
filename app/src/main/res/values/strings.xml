@@ -72,6 +72,7 @@
     <string name="segments">Segments</string>
     <string name="background_play">Background playback</string>
     <string name="pip">Picture-in-Picture</string>
+    <string name="home_button_pip">Home button enters PiP</string>
     <string name="remember_playback_speed">Remember speed</string>
     <string name="reset">Reset</string>
     <string name="reset_all_settings">Reset all settings</string>
