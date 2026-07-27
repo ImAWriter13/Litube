@@ -27,6 +27,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.SwitchCompat;
 import androidx.lifecycle.Lifecycle;
 import androidx.lifecycle.LifecycleEventObserver;
 import androidx.lifecycle.LifecycleOwner;
@@ -396,8 +397,6 @@ public class Controller {
 						if (speedView != null) {
 							speedView.setText(String.format(Locale.getDefault(), "%sx", engine.getPlaybackRate()));
 						}
-						TextView qualityView = playerView.findViewById(R.id.btn_quality);
-						if (qualityView != null) qualityView.setText(qualityButtonLabel());
 					});
 				}
 			}
@@ -405,10 +404,6 @@ public class Controller {
 			@Override
 			public void onTracksChanged(@NonNull Tracks tracks) {
 				updateSubtitleButtonState();
-				playerView.post(() -> {
-					TextView qualityView = playerView.findViewById(R.id.btn_quality);
-					if (qualityView != null) qualityView.setText(qualityButtonLabel());
-				});
 			}
 
 			@Override
@@ -474,24 +469,7 @@ public class Controller {
 			});
 		}
 
-		ImageButton loopBtn = playerView.findViewById(R.id.btn_loop);
-		if (loopBtn != null) {
-			applyLoopMode(loopBtn, prefs.getLoopMode());
-			loopBtn.setOnClickListener(v -> {
-				PlayerLoopMode newMode = getLoopMode().next();
-				setLoopMode(newMode);
-				showHint(activity.getString(getLoopModeLabelRes(newMode)), com.hhst.youtubelite.player.common.Constant.HINT_HIDE_DELAY_MS);
-				setControlsVisible(true);
-			});
-		}
-
 		setClick(R.id.btn_reset, v -> zoomListener.reset());
-	}
-
-	private void applyLoopMode(@NonNull ImageButton loopBtn, @NonNull PlayerLoopMode mode) {
-		engine.setLoopMode(mode);
-		loopBtn.setImageResource(getLoopModeIconRes(mode));
-		loopBtn.setContentDescription(activity.getString(getLoopModeLabelRes(mode)));
 	}
 
 	@NonNull
@@ -501,37 +479,12 @@ public class Controller {
 
 	public void setLoopMode(@NonNull PlayerLoopMode mode) {
 		prefs.setLoopMode(mode);
-		ImageButton loopBtn = playerView.findViewById(R.id.btn_loop);
-		if (loopBtn != null) {
-			applyLoopMode(loopBtn, mode);
-		} else {
-			engine.setLoopMode(mode);
-		}
+		engine.setLoopMode(mode);
 		refreshPlaybackButtons();
 	}
 
-	private int getLoopModeIconRes(@NonNull PlayerLoopMode mode) {
-		return switch (mode) {
-			case PLAYLIST_NEXT -> R.drawable.ic_playback_end_next;
-			case LOOP_ONE -> R.drawable.ic_playback_end_loop;
-			case PAUSE_AT_END -> R.drawable.ic_playback_end_pause;
-			case PLAYLIST_RANDOM -> R.drawable.ic_playback_end_shuffle;
-		};
-	}
-
-	private int getLoopModeLabelRes(@NonNull PlayerLoopMode mode) {
-		return switch (mode) {
-			case PLAYLIST_NEXT -> R.string.playback_end_next;
-			case LOOP_ONE -> R.string.playback_end_loop;
-			case PAUSE_AT_END -> R.string.playback_end_pause;
-			case PLAYLIST_RANDOM -> R.string.playback_end_playlist_random;
-		};
-	}
-
 	private void setupQualityAndSpeedButtons() {
-		// Keep the pickers aligned with the active playback options.
 		TextView speedView = playerView.findViewById(R.id.btn_speed);
-		TextView qualityView = playerView.findViewById(R.id.btn_quality);
 		if (speedView != null)
 			speedView.setText(String.format(Locale.getDefault(), "%sx", engine.getPlaybackRate()));
 
@@ -549,24 +502,6 @@ public class Controller {
 					engine.setPlaybackRate(speeds[index]);
 					prefs.setSpeed(speeds[index]);
 					speedView.setText(label);
-				});
-			});
-		}
-
-		if (qualityView != null) {
-			qualityView.setText(qualityButtonLabel());
-			qualityView.setOnClickListener(v -> {
-				List<String> available = engine.getAvailableResolutions();
-				if (available.isEmpty()) return;
-				String[] labels = available.toArray(new String[0]);
-				String[] values = available.toArray(new String[0]);
-				int checked = prefs.getPreferredQuality() == null ? -1 : Arrays.asList(values).indexOf(engine.getQuality());
-				showSelectionPopup(v, labels, checked, (index, label) -> {
-					String selected = values[index];
-					engine.onQualitySelected(selected);
-					qualityView.setText(label);
-					String js = String.format("(function(t){const p=document.querySelector('#movie_player');const ls=p.getAvailableQualityLabels();const v=l=>parseInt(l.replace(/\\D/g,''));const target=v(t);const closest=ls.reduce((b,c,i)=>Math.abs(v(c)-target)<Math.abs(v(ls[b])-target)?i:b,0);const quality=p.getAvailableQualityLevels()[closest];p.setPlaybackQualityRange(quality,quality);})('%s')", label);
-					tabManager.evaluateJavascript(js, null);
 				});
 			});
 		}
@@ -662,7 +597,7 @@ public class Controller {
 	}
 
 	private void setupOverlayAndMoreButtons() {
-		setClick(R.id.btn_more, v -> {
+		setClick(R.id.btn_settings, v -> {
 			setControlsVisible(true);
 			if (activity.isInPictureInPictureMode()) return;
 			BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(activity);
@@ -693,10 +628,51 @@ public class Controller {
 				bottomSheetDialog.setOnDismissListener(dialog -> hideControlsAutomatically());
 			}
 
-			setupBottomSheetOption(bottomSheetView, R.id.option_resize_mode, b -> {
-				showResizeModeOptions();
-				bottomSheetDialog.dismiss();
-			});
+
+
+			View qualityOption = bottomSheetView.findViewById(R.id.option_quality);
+			if (qualityOption != null) {
+				TextView qualityValue = bottomSheetView.findViewById(R.id.option_quality_value);
+				if (qualityValue != null) qualityValue.setText(qualityButtonLabel());
+				qualityOption.setOnClickListener(b -> {
+					List<String> available = engine.getAvailableResolutions();
+					if (available.isEmpty()) return;
+					String[] labels = available.toArray(new String[0]);
+					String[] values = available.toArray(new String[0]);
+					int checked = prefs.getPreferredQuality() == null ? -1 : Arrays.asList(values).indexOf(engine.getQuality());
+					showSelectionPopup(qualityOption, labels, checked, (index, label) -> {
+						engine.onQualitySelected(values[index]);
+						if (qualityValue != null) qualityValue.setText(label);
+					});
+				});
+			}
+
+			SwitchCompat audioOnlySwitch = bottomSheetView.findViewById(R.id.option_audio_only_switch);
+			if (audioOnlySwitch != null) {
+				audioOnlySwitch.setChecked(engine.isAudioOnly());
+				bottomSheetView.findViewById(R.id.option_audio_only).setOnClickListener(b -> {
+					boolean enabled = !engine.isAudioOnly();
+					engine.setAudioOnly(enabled);
+					audioOnlySwitch.setChecked(enabled);
+					showHint(activity.getString(enabled ? R.string.audio_only_on : R.string.audio_only_off),
+							com.hhst.youtubelite.player.common.Constant.HINT_HIDE_DELAY_MS);
+				});
+			}
+
+			SwitchCompat loopSwitch = bottomSheetView.findViewById(R.id.option_loop_switch);
+			if (loopSwitch != null) {
+				loopSwitch.setChecked(getLoopMode() == PlayerLoopMode.LOOP_ONE);
+				bottomSheetView.findViewById(R.id.option_loop).setOnClickListener(b -> {
+					PlayerLoopMode newMode = getLoopMode() == PlayerLoopMode.LOOP_ONE
+							? PlayerLoopMode.PLAYLIST_NEXT : PlayerLoopMode.LOOP_ONE;
+					setLoopMode(newMode);
+					loopSwitch.setChecked(newMode == PlayerLoopMode.LOOP_ONE);
+					showHint(activity.getString(newMode == PlayerLoopMode.LOOP_ONE
+									? R.string.playback_end_loop : R.string.playback_end_next),
+							com.hhst.youtubelite.player.common.Constant.HINT_HIDE_DELAY_MS);
+				});
+			}
+
 			View pipOption = bottomSheetView.findViewById(R.id.option_pip);
 			if (pipOption != null) {
 				pipOption.setVisibility(extensionManager.isEnabled(Constant.ENABLE_PIP) ? View.VISIBLE : View.GONE);
@@ -1207,52 +1183,6 @@ public class Controller {
 		if (hintText != null) ViewUtils.animateViewAlpha(hintText, 0.0f, View.GONE);
 	}
 
-	private void showResizeModeOptions() {
-		// Build the resize picker with the active mode highlighted.
-		setControlsVisible(true);
-		String[] opts = {activity.getString(R.string.resize_fit), activity.getString(R.string.resize_fill), activity.getString(R.string.resize_zoom), activity.getString(R.string.resize_fixed_width), activity.getString(R.string.resize_fixed_height)};
-		int[] modes = {AspectRatioFrameLayout.RESIZE_MODE_FIT, AspectRatioFrameLayout.RESIZE_MODE_FILL, AspectRatioFrameLayout.RESIZE_MODE_ZOOM, AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH, AspectRatioFrameLayout.RESIZE_MODE_FIXED_HEIGHT};
-		ListAdapter adapter = getResizeAdapter(modes, opts);
-		new MaterialAlertDialogBuilder(activity).setTitle(R.string.resize_mode).setAdapter(adapter, (d, w) -> {
-			playerView.setResizeMode(modes[w]);
-			prefs.setResizeMode(modes[w]);
-			showHint(opts[w], com.hhst.youtubelite.player.common.Constant.HINT_HIDE_DELAY_MS);
-			hideControlsAutomatically();
-		}).setNegativeButton(R.string.cancel, null).show();
-	}
-
-	@NonNull
-	private ListAdapter getResizeAdapter(@NonNull int[] modes, @NonNull String[] options) {
-		int[] icons = {R.drawable.ic_resize_fit, R.drawable.ic_resize_fill, R.drawable.ic_resize_zoom, R.drawable.ic_resize_width, R.drawable.ic_resize_height};
-		int mode = playerView.getResizeMode();
-		int checked = 0;
-		for (int i = 0; i < modes.length; i++) if (modes[i] == mode) checked = i;
-		int selectedIndex = checked;
-		return new ArrayAdapter<>(activity, R.layout.dialog_resize_mode_item, options) {
-			@NonNull
-			@Override
-			public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-				View view = (convertView == null) ? activity.getLayoutInflater().inflate(R.layout.dialog_resize_mode_item, parent, false) : convertView;
-				ImageView icon = view.findViewById(R.id.icon);
-				TextView text = view.findViewById(R.id.text);
-				icon.setImageResource(icons[position]);
-				text.setText(getItem(position));
-				TypedValue tv = new TypedValue();
-				if (position == selectedIndex) {
-					activity.getTheme().resolveAttribute(android.R.attr.colorPrimary, tv, true);
-					icon.setColorFilter(tv.data);
-					text.setTextColor(tv.data);
-					text.setTypeface(null, Typeface.BOLD);
-				} else {
-					activity.getTheme().resolveAttribute(com.google.android.material.R.attr.colorOnSurfaceVariant, tv, true);
-					icon.setColorFilter(activity.getColor(android.R.color.darker_gray));
-					text.setTextColor(tv.data);
-					text.setTypeface(null, Typeface.NORMAL);
-				}
-				return view;
-			}
-		};
-	}
 
 	private void showSelectionPopup(@NonNull View anchor, @NonNull String[] options, int checkedIndex, @NonNull SelectionCallback callback) {
 		// Show a compact popup and keep long-press actions in the same flow.

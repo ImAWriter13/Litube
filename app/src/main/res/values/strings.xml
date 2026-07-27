@@ -26,7 +26,9 @@
     <string name="download_finished">Download complete: \"%1$s\" saved to \"%2$s\"</string>
     <string name="failed_to_download">Failed to download</string>
     <string name="failed_to_download_thumbnail">Failed to download image</string>
-    <string name="audio_only">Audio</string>
+    <string name="audio_only">Audio only</string>
+    <string name="audio_only_on">Audio only on</string>
+    <string name="audio_only_off">Audio only off</string>
     <string name="player_gestures">Player gestures</string>
     <string name="close">Close</string>
     <string name="save">Save</string>
@@ -45,7 +47,9 @@
     <string name="action_next">Skip to next</string>
     <string name="general">Appearance</string>
     <string name="interface_category">Interface</string>
-    <string name="interface_summary">Show dislikes, hide Shorts</string>
+    <string name="interface_summary">Show dislikes, hide Shorts, AMOLED theme, ambient mode</string>
+    <string name="amoled_theme">AMOLED theme</string>
+    <string name="disable_ambient">Disable ambient mode</string>
     <string name="player">Playback</string>
     <string name="playback_summary">Position, quality, speed, resize mode</string>
     <string name="gesture">Gesture</string>

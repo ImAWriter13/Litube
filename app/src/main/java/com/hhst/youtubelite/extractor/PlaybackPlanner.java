@@ -82,6 +82,33 @@ public final class PlaybackPlanner {
 		return plan;
 	}
 
+	@NonNull
+	public static PlaybackPlan planAudioOnly(@NonNull DeliveryCatalog deliveries,
+	                                         @Nullable String preferredAudioLanguage) {
+		PlaybackPlan plan = new PlaybackPlan();
+		plan.setStreamType(deliveries.getStreamType());
+		Delivery adaptive = deliveries.first(PlaybackMode.ADAPTIVE);
+		if (adaptive != null && !adaptive.getAudio().isEmpty()) {
+			List<AudioStream> tracks = reorderAudioTracks(adaptive.audioStreams(), preferredAudioLanguage);
+			plan.setMode(PlaybackMode.AUDIO_ONLY);
+			plan.setDelivery(adaptive);
+			plan.setAudioCandidate(findAudioCandidate(adaptive.getAudio(),
+					PlayerUtils.selectAudioStream(tracks, null)));
+			if (plan.getAudioCandidate() != null) {
+				return plan;
+			}
+		}
+		Delivery audio = deliveries.first(PlaybackMode.AUDIO_ONLY);
+		if (audio != null) {
+			List<AudioStream> tracks = reorderAudioTracks(audio.audioStreams(), preferredAudioLanguage);
+			plan.setMode(PlaybackMode.AUDIO_ONLY);
+			plan.setDelivery(audio);
+			plan.setAudioCandidate(findAudioCandidate(audio.getAudio(),
+					PlayerUtils.selectAudioStream(tracks, null)));
+		}
+		return plan;
+	}
+
 	@Nullable
 	public static PlaybackPlan muxedFallbackPlan(@NonNull DeliveryCatalog deliveries,
 	                                             @Nullable String preferredQuality) {

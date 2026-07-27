@@ -38,6 +38,8 @@
     <string name="restart">Reiniciar</string>
     <string name="display_dislikes">Mostrar \"No me gusta\"</string>
     <string name="hide_shorts">Ocultar Shorts</string>
+    <string name="amoled_theme">Tema AMOLED</string>
+    <string name="disable_ambient">Desactivar modo ambiente</string>
     <string name="action_pause">Pausar</string>
     <string name="action_play">Reproducir</string>
     <string name="action_replay">Volver a reproducir</string>
@@ -45,7 +47,7 @@
     <string name="action_next">Siguiente</string>
     <string name="general">Apariencia</string>
     <string name="interface_category">Interfaz</string>
-    <string name="interface_summary">Mostrar \"No me gusta\", ocultar Shorts</string>
+    <string name="interface_summary">Mostrar \"No me gusta\", ocultar Shorts, tema AMOLED, modo ambiente</string>
     <string name="player">Reproducción</string>
     <string name="playback_summary">Posición, calidad, velocidad, modo de ajuste</string>
     <string name="gesture">Gestos</string>

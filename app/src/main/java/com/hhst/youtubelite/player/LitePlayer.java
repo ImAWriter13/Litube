@@ -1,6 +1,8 @@
 package com.hhst.youtubelite.player;
 
 import android.app.Activity;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.View;
 
 import androidx.annotation.NonNull;
@@ -109,6 +111,8 @@ public class LitePlayer {
 	@Getter
 	private boolean inMiniPlayer;
 	private boolean wasInPip;
+	private final Handler pipHandler = new Handler(Looper.getMainLooper());
+	private int pipCloseToken;
 
 	@Inject
 	public LitePlayer(@NonNull Activity activity,
@@ -134,6 +138,7 @@ public class LitePlayer {
 		this.executor = executor;
 		this.extensionManager = extensionManager;
 		playerView.setup();
+		playerView.setPiPAudioOnlyCallback(this::enablePiPAudioOnly);
 		queueRepo.addListener(queueListener);
 		setupEngineListeners();
 	}
@@ -461,8 +466,21 @@ public class LitePlayer {
 		controller.syncRotation(autoRotate, orientation);
 	}
 
+	public boolean isAudioOnly() {
+		return engine.isAudioOnly();
+	}
+
+	public void enablePiPAudioOnly() {
+		engine.setAudioOnly(true);
+	}
+
 	public void enterPictureInPicture() {
 		playerView.enterPiP();
+	}
+
+	public void resumeVideoPlayback() {
+		pipCloseToken++;
+		engine.setAudioOnly(false);
 	}
 
 	public boolean shouldAutoEnterPictureInPicture() {
@@ -514,9 +532,15 @@ public class LitePlayer {
 
     public void onPictureInPictureModeChanged(boolean isInPiP) {
         controller.onPictureInPictureModeChanged(isInPiP);
-        if (!isInPiP) {
-            engine.pause();
-            playerView.disableAutoPiP();
+		if (!isInPiP) {
+			pipCloseToken++;
+			int token = pipCloseToken;
+			pipHandler.postDelayed(() -> {
+				if (token == pipCloseToken && !activity.hasWindowFocus() && !engine.isAudioOnly()) {
+					engine.pause();
+				}
+			}, 500);
+			playerView.disableAutoPiP();
             if (extensionManager.isEnabled(Constant.ENABLE_HOME_BUTTON_PIP) && engine.isPlaying()) {
                 playerView.enableAutoPiP();
             }

@@ -21,11 +21,15 @@
     <string name="restart">Redémarrer</string>
     <string name="display_dislikes">Afficher les dislikes</string>
     <string name="hide_shorts">Masquer les shorts</string>
+    <string name="amoled_theme">Thème AMOLED</string>
+    <string name="disable_ambient">Désactiver le mode ambiant</string>
     <string name="action_pause">Pause</string>
     <string name="action_play">Lecture</string>
     <string name="action_previous">Passer au précédent</string>
     <string name="action_next">Passer au suivant</string>
     <string name="general">Apparence</string>
+    <string name="interface_category">Interface</string>
+    <string name="interface_summary">Afficher les dislikes, masquer Shorts, thème AMOLED, mode ambiant</string>
     <string name="player">Lecture</string>
     <string name="sponsorblock">SponsorBlock</string>
     <string name="skip_sponsors">Ignorer les sponsors</string>

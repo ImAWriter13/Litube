@@ -21,11 +21,15 @@
     <string name="restart">Перезапустить</string>
     <string name="display_dislikes">Отображать "Не нравится"</string>
     <string name="hide_shorts">Скрыть "Shorts"</string>
+    <string name="amoled_theme">AMOLED-тема</string>
+    <string name="disable_ambient">Отключить режим Ambient</string>
     <string name="action_pause">Пауза</string>
     <string name="action_play">Играть</string>
     <string name="action_previous">Перейти к предыдущему</string>
     <string name="action_next">Перейти к следующему</string>
     <string name="general">Оформление</string>
+    <string name="interface_category">Интерфейс</string>
+    <string name="interface_summary">Отображение дизлайков, скрытие Shorts, AMOLED-тема, Ambient режим</string>
     <string name="player">Воспроизведение</string>
     <string name="sponsorblock">SponsorBlock</string>
     <string name="skip_sponsors">Пропускать спонсоры</string>

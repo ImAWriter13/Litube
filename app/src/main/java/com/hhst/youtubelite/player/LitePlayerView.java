@@ -2,12 +2,16 @@ package com.hhst.youtubelite.player;
 
 
 import android.app.Activity;
+import android.app.PendingIntent;
 import android.app.PictureInPictureParams;
+import android.app.RemoteAction;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Outline;
 import android.graphics.Rect;
+import android.graphics.drawable.Icon;
 import android.util.AttributeSet;
 import android.util.Rational;
 import android.view.MotionEvent;
@@ -27,6 +31,9 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import android.support.v4.media.session.PlaybackStateCompat;
+import androidx.media.session.MediaButtonReceiver;
+import androidx.media3.common.Player;
 import androidx.media3.common.text.Cue;
 import androidx.media3.common.text.CueGroup;
 import androidx.media3.common.util.UnstableApi;
@@ -125,6 +132,8 @@ public class LitePlayerView extends PlayerView {
 	private int miniPlayerWidthOverrideDp = MiniPlayerLayout.NO_WIDTH_OVERRIDE_DP;
 	private boolean miniAnimating;
 	private int miniAnimToken;
+	@Nullable
+	private Runnable onPiPAudioOnly;
 
 	public LitePlayerView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
 		super(context, attrs, defStyleAttr);
@@ -221,8 +230,14 @@ public class LitePlayerView extends PlayerView {
 	public void enterPiP() {
 		if (activity.isInPictureInPictureMode()) return;
 		if (!isFs && !inAppMiniPlayer) normalHeight = playerHeight;
-		PictureInPictureParams params = buildPiPParams(true);
-		activity.enterPictureInPictureMode(params);
+		if (!inAppMiniPlayer && !isFs) {
+			requestRectangleOnScreen(new Rect(0, 0, getWidth(), getHeight()), true);
+		}
+		activity.enterPictureInPictureMode(buildPiPParams(true));
+	}
+
+	public void setPiPAudioOnlyCallback(@Nullable Runnable callback) {
+		onPiPAudioOnly = callback;
 	}
 
 	public void disableAutoPiP() {
@@ -767,8 +782,35 @@ public class LitePlayerView extends PlayerView {
 		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
 			builder.setAutoEnterEnabled(autoEnter);
 		}
+		if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+			List<RemoteAction> actions = new ArrayList<>();
+			if (onPiPAudioOnly != null) {
+				Intent audioOnlyIntent = new Intent(activity, com.hhst.youtubelite.ui.MainActivity.class);
+				audioOnlyIntent.setAction(com.hhst.youtubelite.Constant.ACTION_PIP_AUDIO_ONLY);
+				PendingIntent audioOnlyPendingIntent = PendingIntent.getActivity(
+						activity, 0, audioOnlyIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+				actions.add(new RemoteAction(
+						Icon.createWithResource(activity, R.drawable.ic_audio),
+						activity.getString(R.string.audio_only), activity.getString(R.string.audio_only), audioOnlyPendingIntent));
+			}
+			Player p = getPlayer();
+			boolean isPlaying = p != null && p.isPlaying();
+			int playIcon = isPlaying ? R.drawable.ic_pause : R.drawable.ic_play;
+			String playLabel = activity.getString(isPlaying ? R.string.action_pause : R.string.action_play);
+			PendingIntent playPauseIntent = MediaButtonReceiver.buildMediaButtonPendingIntent(activity, PlaybackStateCompat.ACTION_PLAY_PAUSE);
+			actions.add(new RemoteAction(
+					Icon.createWithResource(activity, playIcon),
+					playLabel, playLabel, playPauseIntent));
+			PendingIntent nextIntent = MediaButtonReceiver.buildMediaButtonPendingIntent(activity, PlaybackStateCompat.ACTION_SKIP_TO_NEXT);
+			actions.add(new RemoteAction(
+					Icon.createWithResource(activity, R.drawable.ic_next),
+					activity.getString(R.string.action_next), activity.getString(R.string.action_next), nextIntent));
+			builder.setActions(actions);
+		}
 		Rect sourceRectHint = new Rect();
-		if (getGlobalVisibleRect(sourceRectHint)) {
+		if (getGlobalVisibleRect(sourceRectHint)
+						&& sourceRectHint.width() >= getWidth()
+						&& sourceRectHint.height() >= getHeight()) {
 			builder.setSourceRectHint(sourceRectHint);
 		}
 		return builder.build();

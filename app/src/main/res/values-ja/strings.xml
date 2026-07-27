@@ -21,11 +21,15 @@
     <string name="restart">再起動</string>
     <string name="display_dislikes">低評価数を表示</string>
     <string name="hide_shorts">Shortsを非表示</string>
+    <string name="amoled_theme">AMOLEDテーマ</string>
+    <string name="disable_ambient">アンビエントモードを無効化</string>
     <string name="action_pause">一時停止</string>
     <string name="action_play">再生</string>
     <string name="action_previous">前へ</string>
     <string name="action_next">次へ</string>
     <string name="general">外観</string>
+    <string name="interface_category">インターフェース</string>
+    <string name="interface_summary">低評価表示、Shorts非表示、AMOLEDテーマ、アンビエントモード</string>
     <string name="player">再生</string>
     <string name="sponsorblock">SponsorBlock</string>
     <string name="skip_sponsors">スポンサーをスキップ</string>

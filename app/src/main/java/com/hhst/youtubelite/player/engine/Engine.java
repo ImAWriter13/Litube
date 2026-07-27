@@ -136,7 +136,7 @@ public class Engine {
 	private VideoStream videoStream;
 	@NonNull
 	private final Set<String> failedAdaptiveCandidates = new HashSet<>();
-
+	private boolean audioOnly;
 	@Inject
 	public Engine(@NonNull @ApplicationContext Context context,
 	              @NonNull LitePlayerView playerView,
@@ -466,6 +466,17 @@ public class Engine {
 
 	public VideoSize getVideoSize() {
 		return this.player.getVideoSize();
+	}
+
+	public void setAudioOnly(boolean audioOnly) {
+		this.audioOnly = audioOnly;
+		this.player.setTrackSelectionParameters(this.player.getTrackSelectionParameters().buildUpon()
+						.setTrackTypeDisabled(C.TRACK_TYPE_VIDEO, audioOnly)
+						.build());
+	}
+
+	public boolean isAudioOnly() {
+		return audioOnly;
 	}
 
 	public void setSubtitlesEnabled(boolean enabled) {

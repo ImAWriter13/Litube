@@ -37,12 +37,16 @@
     <string name="restart">Yeniden Başlat</string>
     <string name="display_dislikes">Beğenmeme sayısını (Dislike) göster</string>
     <string name="hide_shorts">Shorts videolarını gizle</string>
+    <string name="amoled_theme">AMOLED teması</string>
+    <string name="disable_ambient">Ortam modunu kapat</string>
     <string name="action_pause">Duraklat</string>
     <string name="action_play">Oynat</string>
     <string name="action_replay">Baştan oynat</string>
     <string name="action_previous">Öncekine geç</string>
     <string name="action_next">Sıradakine geç</string>
     <string name="general">Görünüm</string>
+    <string name="interface_category">Arayüz</string>
+    <string name="interface_summary">Beğenmeme gösterme, Shorts gizleme, AMOLED teması, ortam modu</string>
     <string name="player">Oynatma</string>
     <string name="sponsorblock">SponsorBlock</string>
     <string name="skip_sponsors">Sponsorlu kısımları atla</string>

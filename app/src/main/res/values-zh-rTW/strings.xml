@@ -22,6 +22,8 @@
     <string name="restart">重啟</string>
     <string name="display_dislikes">顯示點踩數</string>
     <string name="hide_shorts">隱藏 Shorts</string>
+    <string name="amoled_theme">AMOLED主題</string>
+    <string name="disable_ambient">關閉環境光效</string>
     <string name="action_pause">暫停</string>
     <string name="action_play">播放</string>
     <string name="action_replay">重新播放</string>
@@ -29,7 +31,7 @@
     <string name="action_next">下一個</string>
     <string name="general">外觀</string>
     <string name="interface_category">介面</string>
-    <string name="interface_summary">顯示點踩數，隱藏 Shorts</string>
+    <string name="interface_summary">顯示點踩數，隱藏 Shorts，AMOLED主題，環境光效</string>
     <string name="player">播放</string>
     <string name="playback_summary">進度、畫質、倍速、縮放模式</string>
     <string name="gesture">手勢</string>

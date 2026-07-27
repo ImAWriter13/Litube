@@ -149,7 +149,6 @@ public final class MainActivity extends AppCompatActivity implements LifecycleEv
 
 		View playerRoot = findViewById(R.id.playerView);
 		playerRoot.post(() -> {
-			findViewById(R.id.btn_queue).setOnClickListener(v -> showQueueBottomSheet());
 			findViewById(R.id.btn_mini_queue).setOnClickListener(v -> showQueueBottomSheet());
 		});
 		if (PermissionUtils.needsPostNotificationsPermission()
@@ -241,6 +240,7 @@ public final class MainActivity extends AppCompatActivity implements LifecycleEv
 		if (event != Lifecycle.Event.ON_STOP
 						|| player == null
 						|| DeviceUtils.isInPictureInPictureMode(this)
+						|| player.isAudioOnly()
 						|| extensionManager.isEnabled(Constant.ENABLE_BACKGROUND_PLAY)) {
 			return;
 		}
@@ -256,6 +256,18 @@ public final class MainActivity extends AppCompatActivity implements LifecycleEv
 	private void handleIntent(@Nullable Intent intent) {
 		if (intent == null) return;
 		String action = intent.getAction();
+
+		if (com.hhst.youtubelite.Constant.ACTION_PIP_AUDIO_ONLY.equals(action)) {
+			if (player != null) {
+				player.enablePiPAudioOnly();
+			}
+			if (DeviceUtils.isInPictureInPictureMode(this)) {
+				if (moveTaskToBack(true)) return;
+				finishAndRemoveTask();
+			}
+			return;
+		}
+
 		boolean isDownloadAction = "TRIGGER_DOWNLOAD_FROM_SHARE".equals(action);
 
 		if ("OPEN_DOWNLOADS".equals(action)) {
@@ -615,8 +627,11 @@ public final class MainActivity extends AppCompatActivity implements LifecycleEv
 	protected void onResume() {
 		super.onResume();
 		suppressPiP = false;
-		if (player != null && player.isInMiniPlayer() && !DeviceUtils.isInPictureInPictureMode(this)) {
-			player.restoreInAppMiniPlayerUiIfNeeded();
+		if (player != null) {
+			player.resumeVideoPlayback();
+			if (player.isInMiniPlayer() && !DeviceUtils.isInPictureInPictureMode(this)) {
+				player.restoreInAppMiniPlayerUiIfNeeded();
+			}
 		}
 	}
 
