@@ -49,7 +49,9 @@
     <string name="interface_category">Interface</string>
     <string name="interface_summary">Show dislikes, hide Shorts, AMOLED theme, ambient mode</string>
     <string name="amoled_theme">AMOLED theme</string>
+    <string name="amoled_custom_color">Custom Color</string>
     <string name="disable_ambient">Disable ambient mode</string>
+    <string name="enable_premium_logo">Premium Logo</string>
     <string name="player">Playback</string>
     <string name="playback_summary">Position, quality, speed, resize mode</string>
     <string name="gesture">Gesture</string>
@@ -78,6 +80,7 @@
     <string name="pip">Picture-in-Picture</string>
     <string name="home_button_pip">Home button enters PiP</string>
     <string name="remember_playback_speed">Remember speed</string>
+    <string name="custom_speed">Custom Speed Values</string>
     <string name="reset">Reset</string>
     <string name="reset_all_settings">Reset all settings</string>
     <string name="player_quality_auto">Auto</string>

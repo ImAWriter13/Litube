@@ -1,9 +1,13 @@
 package com.hhst.youtubelite.player;
 
 import android.app.Activity;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
+import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
+import android.widget.ProgressBar;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -183,6 +187,7 @@ public class LitePlayer {
 			@Override
 			public void onPlaybackStateChanged(int state) {
 				if (state == Player.STATE_READY) {
+					applyCustomPlayerColor();
 					updateServiceProgress(engine.isPlaying());
 				}
 			}
@@ -248,6 +253,7 @@ public class LitePlayer {
 			layer.setData(null, 0, TimeUnit.MILLISECONDS);
 			DefaultTimeBar bar = playerView.findViewById(R.id.exo_progress);
 			bar.setAdGroupTimesMs(null, null, 0);
+			applyCustomPlayerColor();
 			playerView.show();
 			controller.syncRotation(
 							DeviceUtils.isRotateOn(activity),
@@ -320,6 +326,53 @@ public class LitePlayer {
 							}
 							return null;
 						});
+	}
+
+	private void applyCustomPlayerColor() {
+		if (!extensionManager.isEnabled("amoled_custom_color_enabled")) {
+			return;
+		}
+		String hex = extensionManager.getString("amoled_custom_color");
+		int accentColor;
+		try {
+			accentColor = Color.parseColor(hex);
+		} catch (Exception e) {
+			return;
+		}
+		DefaultTimeBar timeBar = playerView.findViewById(R.id.exo_progress);
+		if (timeBar != null) {
+			timeBar.setPlayedColor(accentColor);
+			timeBar.setScrubberColor(accentColor);
+		}
+		applyBufferingSpinnerColor(playerView, accentColor);
+	}
+
+	private void applyBufferingSpinnerColor(View playerView, int color) {
+		try {
+			int exoBufferingId = playerView.getResources().getIdentifier("exo_buffering", "id", playerView.getContext().getPackageName());
+			if (exoBufferingId == 0) {
+				exoBufferingId = android.R.id.progress;
+			}
+			View bufferingView = playerView.findViewById(exoBufferingId);
+			if (bufferingView == null) return;
+			adjustIndeterminateColor(bufferingView, color);
+		} catch (Exception ignored) {
+		}
+	}
+
+	private void adjustIndeterminateColor(View parent, int color) {
+		if (parent instanceof ProgressBar progressBar) {
+			Drawable indeterminateDrawable = progressBar.getIndeterminateDrawable();
+			if (indeterminateDrawable != null) {
+				indeterminateDrawable.setColorFilter(color, PorterDuff.Mode.SRC_IN);
+			}
+			return;
+		}
+		if (parent instanceof android.view.ViewGroup viewGroup) {
+			for (int i = 0; i < viewGroup.getChildCount(); i++) {
+				adjustIndeterminateColor(viewGroup.getChildAt(i), color);
+			}
+		}
 	}
 
 	@NonNull

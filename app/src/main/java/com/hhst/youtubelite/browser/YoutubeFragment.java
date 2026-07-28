@@ -1,6 +1,7 @@
 package com.hhst.youtubelite.browser;
 
 import android.os.Bundle;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -140,9 +141,29 @@ public final class YoutubeFragment extends Fragment {
 		if (webView == null || isHidden()) return;
 		webView.setScriptActive(true);
 		webView.syncPreferences();
+		applyCustomRefreshColor();
 		webView.onResume();
 		webView.resumeTimers();
 		webView.refreshPoTokenContext();
+	}
+
+	private void applyCustomRefreshColor() {
+		View view = getView();
+		if (view == null) return;
+		androidx.swiperefreshlayout.widget.SwipeRefreshLayout srl = view.findViewById(R.id.swipeRefreshLayout);
+		if (srl == null) return;
+		try {
+			boolean customColorEnabled = extensionManager.isEnabled("amoled_custom_color_enabled");
+			if (customColorEnabled) {
+				String hex = extensionManager.getString("amoled_custom_color");
+				int color = Color.parseColor(hex);
+				srl.setColorSchemeColors(color);
+			} else {
+				srl.setColorSchemeResources(R.color.yt_red);
+			}
+		} catch (Exception ignored) {
+			srl.setColorSchemeResources(R.color.yt_red);
+		}
 	}
 
 	@Override

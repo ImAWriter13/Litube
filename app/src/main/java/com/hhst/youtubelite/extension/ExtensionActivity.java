@@ -1,11 +1,15 @@
 package com.hhst.youtubelite.extension;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -33,13 +37,12 @@ import javax.inject.Inject;
 
 import dagger.hilt.android.AndroidEntryPoint;
 
-/**
- * Screen that shows extension settings as categorized pages.
- */
 @AndroidEntryPoint
 public class ExtensionActivity extends AppCompatActivity {
 	private static final int TYPE_NAV = 0;
 	private static final int TYPE_TOGGLE = 1;
+	private static final int TYPE_COLOR_PICKER = 2;
+	private static final int TYPE_TEXT_INPUT = 3;
 	@Inject
 	ExtensionManager manager;
 	private final Deque<Extension> stack = new ArrayDeque<>();
@@ -135,7 +138,10 @@ public class ExtensionActivity extends AppCompatActivity {
 
 		@Override
 		public int getItemViewType(int position) {
-			return items.get(position).hasChildren() ? TYPE_NAV : TYPE_TOGGLE;
+			Extension item = items.get(position);
+			if (item.isColorPicker()) return TYPE_COLOR_PICKER;
+			if (item.isTextInput()) return TYPE_TEXT_INPUT;
+			return item.hasChildren() ? TYPE_NAV : TYPE_TOGGLE;
 		}
 
 		@Override
@@ -149,6 +155,10 @@ public class ExtensionActivity extends AppCompatActivity {
 			LayoutInflater inflater = LayoutInflater.from(parent.getContext());
 			if (viewType == TYPE_NAV) {
 				return new NavHolder(inflater.inflate(R.layout.item_extension_nav, parent, false));
+			} else if (viewType == TYPE_COLOR_PICKER) {
+				return new ColorPickerHolder(inflater.inflate(R.layout.item_extension_color_picker, parent, false));
+			} else if (viewType == TYPE_TEXT_INPUT) {
+				return new TextInputHolder(inflater.inflate(R.layout.item_extension_text_input, parent, false));
 			}
 			return new ToggleHolder(inflater.inflate(R.layout.item_extension_toggle, parent, false));
 		}
@@ -158,9 +168,13 @@ public class ExtensionActivity extends AppCompatActivity {
 			Extension item = items.get(position);
 			if (holder instanceof NavHolder nav) {
 				nav.bind(item);
-				return;
+			} else if (holder instanceof ColorPickerHolder cp) {
+				cp.bind(item);
+			} else if (holder instanceof TextInputHolder ti) {
+				ti.bind(item);
+			} else {
+				((ToggleHolder) holder).bind(item);
 			}
-			((ToggleHolder) holder).bind(item);
 		}
 	}
 
@@ -220,6 +234,121 @@ public class ExtensionActivity extends AppCompatActivity {
 			toggle.setOnCheckedChangeListener(null);
 			toggle.setChecked(manager.isEnabled(item.key()));
 			toggle.setOnCheckedChangeListener((buttonView, isChecked) -> manager.setEnabled(item.key(), isChecked));
+			itemView.setOnClickListener(v -> toggle.toggle());
+		}
+	}
+
+	private final class ColorPickerHolder extends RecyclerView.ViewHolder {
+		private final TextView title;
+		private final SwitchMaterial toggle;
+		private final EditText colorInput;
+		private final View colorPreview;
+		private TextWatcher colorWatcher;
+
+		private ColorPickerHolder(@NonNull View itemView) {
+			super(itemView);
+			title = itemView.findViewById(R.id.title);
+			toggle = itemView.findViewById(R.id.toggle);
+			colorInput = itemView.findViewById(R.id.colorInput);
+			colorPreview = itemView.findViewById(R.id.colorPreview);
+		}
+
+		private void bind(@NonNull Extension item) {
+			title.setText(item.title());
+			String colorKey = item.children().get(0).key();
+
+			toggle.setOnCheckedChangeListener(null);
+			toggle.setChecked(manager.isEnabled(item.key()));
+			toggle.setOnCheckedChangeListener((buttonView, isChecked) -> {
+				manager.setEnabled(item.key(), isChecked);
+				updateColorInputVisibility(isChecked);
+			});
+
+			if (colorWatcher != null) {
+				colorInput.removeTextChangedListener(colorWatcher);
+			}
+
+			String currentColor = manager.getString(colorKey);
+			colorInput.setText(currentColor);
+			updateColorInputVisibility(manager.isEnabled(item.key()));
+			updateColorPreview(currentColor);
+
+			colorWatcher = new TextWatcher() {
+				@Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+				@Override public void afterTextChanged(Editable s) {}
+
+				@Override
+				public void onTextChanged(CharSequence s, int start, int before, int count) {
+					String hex = s.toString().trim();
+					if (hex.matches("^#[0-9A-Fa-f]{6}$")) {
+						manager.setString(colorKey, hex);
+						updateColorPreview(hex);
+					}
+				}
+			};
+			colorInput.addTextChangedListener(colorWatcher);
+
+			itemView.setOnClickListener(v -> toggle.toggle());
+		}
+
+		private void updateColorInputVisibility(boolean visible) {
+			colorInput.setVisibility(visible ? View.VISIBLE : View.GONE);
+			colorPreview.setVisibility(visible ? View.VISIBLE : View.GONE);
+		}
+
+		private void updateColorPreview(String hex) {
+			try {
+				colorPreview.setBackgroundColor(Color.parseColor(hex));
+			} catch (Exception e) {
+				colorPreview.setBackgroundColor(Color.GRAY);
+			}
+		}
+	}
+
+	private final class TextInputHolder extends RecyclerView.ViewHolder {
+		private final TextView title;
+		private final SwitchMaterial toggle;
+		private final EditText textInput;
+		private final View inputContainer;
+		private TextWatcher watcher;
+
+		private TextInputHolder(@NonNull View itemView) {
+			super(itemView);
+			title = itemView.findViewById(R.id.title);
+			toggle = itemView.findViewById(R.id.toggle);
+			textInput = itemView.findViewById(R.id.textInput);
+			inputContainer = itemView.findViewById(R.id.inputContainer);
+		}
+
+		private void bind(@NonNull Extension item) {
+			title.setText(item.title());
+			String valueKey = item.children().get(0).key();
+
+			toggle.setOnCheckedChangeListener(null);
+			toggle.setChecked(manager.isEnabled(item.key()));
+			toggle.setOnCheckedChangeListener((buttonView, isChecked) -> {
+				manager.setEnabled(item.key(), isChecked);
+				inputContainer.setVisibility(isChecked ? View.VISIBLE : View.GONE);
+			});
+
+			if (watcher != null) {
+				textInput.removeTextChangedListener(watcher);
+			}
+
+			textInput.setText(manager.getString(valueKey));
+			inputContainer.setVisibility(manager.isEnabled(item.key()) ? View.VISIBLE : View.GONE);
+
+			watcher = new TextWatcher() {
+				@Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+				@Override public void afterTextChanged(Editable s) {}
+
+				@Override
+				public void onTextChanged(CharSequence s, int start, int before, int count) {
+					manager.setString(valueKey, s.toString().trim());
+				}
+			};
+			textInput.addTextChangedListener(watcher);
+
 			itemView.setOnClickListener(v -> toggle.toggle());
 		}
 	}

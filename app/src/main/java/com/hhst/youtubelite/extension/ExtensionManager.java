@@ -31,6 +31,18 @@ public class ExtensionManager {
 				mmkv.encode(key, entry.getValue());
 			}
 		}
+		for (Map.Entry<String, String> entry : Constant.DEFAULT_COLORS.entrySet()) {
+			String key = prefKey(entry.getKey());
+			if (!mmkv.contains(key)) {
+				mmkv.encode(key, entry.getValue());
+			}
+		}
+		for (Map.Entry<String, String> entry : Constant.DEFAULT_STRINGS.entrySet()) {
+			String key = prefKey(entry.getKey());
+			if (!mmkv.contains(key)) {
+				mmkv.encode(key, entry.getValue());
+			}
+		}
 	}
 
 	private void initializeGesturePreferences() {
@@ -66,6 +78,20 @@ public class ExtensionManager {
 		return mmkv.decodeBool(prefKey(key), Boolean.TRUE.equals(Constant.DEFAULT_PREFERENCES.getOrDefault(key, false)));
 	}
 
+	public void setString(String key, String value) {
+		String pref = prefKey(key);
+		String old = mmkv.decodeString(pref, "");
+		if (!old.equals(value)) {
+			mmkv.encode(pref, value);
+			bumpVersion();
+		}
+	}
+
+	public String getString(String key) {
+		String defaultValue = Constant.DEFAULT_COLORS.getOrDefault(key, Constant.DEFAULT_STRINGS.getOrDefault(key, ""));
+		return mmkv.decodeString(prefKey(key), defaultValue);
+	}
+
 	public void resetToDefault() {
 		boolean changed = false;
 		for (Map.Entry<String, Boolean> entry : Constant.DEFAULT_PREFERENCES.entrySet()) {
@@ -76,15 +102,37 @@ public class ExtensionManager {
 			}
 			mmkv.encode(key, value);
 		}
+		for (Map.Entry<String, String> entry : Constant.DEFAULT_COLORS.entrySet()) {
+			String key = prefKey(entry.getKey());
+			String value = entry.getValue();
+			if (!value.equals(mmkv.decodeString(key, value))) {
+				changed = true;
+			}
+			mmkv.encode(key, value);
+		}
+		for (Map.Entry<String, String> entry : Constant.DEFAULT_STRINGS.entrySet()) {
+			String key = prefKey(entry.getKey());
+			String value = entry.getValue();
+			if (!value.equals(mmkv.decodeString(key, value))) {
+				changed = true;
+			}
+			mmkv.encode(key, value);
+		}
 		if (changed) {
 			bumpVersion();
 		}
 	}
 
-	public Map<String, Boolean> getAllPreferences() {
-		Map<String, Boolean> allPreferences = new HashMap<>();
+	public Map<String, Object> getAllPreferences() {
+		Map<String, Object> allPreferences = new HashMap<>();
 		for (String key : Constant.DEFAULT_PREFERENCES.keySet()) {
 			allPreferences.put(key, isEnabled(key));
+		}
+		for (String key : Constant.DEFAULT_COLORS.keySet()) {
+			allPreferences.put(key, getString(key));
+		}
+		for (String key : Constant.DEFAULT_STRINGS.keySet()) {
+			allPreferences.put(key, getString(key));
 		}
 		return allPreferences;
 	}

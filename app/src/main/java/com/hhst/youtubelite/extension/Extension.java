@@ -4,6 +4,7 @@ import static com.hhst.youtubelite.Constant.ENABLE_BACKGROUND_PLAY;
 import static com.hhst.youtubelite.Constant.ENABLE_HOME_BUTTON_PIP;
 import static com.hhst.youtubelite.Constant.ENABLE_IN_APP_MINI_PLAYER;
 import static com.hhst.youtubelite.Constant.ENABLE_PIP;
+import static com.hhst.youtubelite.Constant.ENABLE_PREMIUM_LOGO;
 import static com.hhst.youtubelite.Constant.REMEMBER_LAST_POSITION;
 import static com.hhst.youtubelite.Constant.REMEMBER_RESIZE_MODE;
 import static com.hhst.youtubelite.Constant.SKIP_POI_HIGHLIGHT;
@@ -14,10 +15,12 @@ import com.hhst.youtubelite.R;
 
 import java.util.List;
 
-/**
- * Value object for app logic.
- */
-public record Extension(String key, int title, int summary, int icon, List<Extension> children) {
+public record Extension(String key, int title, int summary, int icon, int type, List<Extension> children) {
+
+	public static final int TYPE_TOGGLE = 0;
+	public static final int TYPE_NAV = 1;
+	public static final int TYPE_COLOR_PICKER = 2;
+	public static final int TYPE_TEXT_INPUT = 3;
 
 	public Extension {
 		children = children == null ? List.of() : children;
@@ -29,13 +32,16 @@ public record Extension(String key, int title, int summary, int icon, List<Exten
 										toggle(Constant.ENABLE_DISPLAY_DISLIKES, R.string.display_dislikes),
 										toggle(Constant.ENABLE_HIDE_SHORTS, R.string.hide_shorts),
 										toggle(Constant.AMOLED_THEME, R.string.amoled_theme),
-										toggle(Constant.DISABLE_AMBIENT, R.string.disable_ambient)
+										colorPicker(Constant.AMOLED_CUSTOM_COLOR_ENABLED, Constant.AMOLED_CUSTOM_COLOR, R.string.amoled_custom_color),
+										toggle(Constant.DISABLE_AMBIENT, R.string.disable_ambient),
+										toggle(ENABLE_PREMIUM_LOGO, R.string.enable_premium_logo)
 						)),
 						page(R.string.player, R.string.playback_summary, R.drawable.ic_play, List.of(
 										toggle(REMEMBER_LAST_POSITION, R.string.remember_last_position),
 										toggle(Constant.REMEMBER_QUALITY, R.string.remember_quality),
 										toggle(Constant.REMEMBER_PLAYBACK_SPEED, R.string.remember_playback_speed),
-										toggle(REMEMBER_RESIZE_MODE, R.string.remember_resize_mode)
+										toggle(REMEMBER_RESIZE_MODE, R.string.remember_resize_mode),
+										textInput(Constant.CUSTOM_SPEED_ENABLED, Constant.CUSTOM_SPEED_VALUES, R.string.custom_speed)
 						)),
 						page(R.string.gesture, R.string.gesture_summary, R.drawable.ic_gesture, List.of(
 										page(R.string.gesture_single_tap, 0, 0, List.of(
@@ -82,14 +88,34 @@ public record Extension(String key, int title, int summary, int icon, List<Exten
 	}
 
 	private static Extension page(int title, int summary, int icon, List<Extension> children) {
-		return new Extension(null, title, summary, icon, children);
+		return new Extension(null, title, summary, icon, TYPE_NAV, children);
 	}
 
 	private static Extension toggle(String key, int title) {
-		return new Extension(key, title, 0, 0, List.of());
+		return new Extension(key, title, 0, 0, TYPE_TOGGLE, List.of());
+	}
+
+	private static Extension colorPicker(String toggleKey, String colorKey, int title) {
+		return new Extension(toggleKey, title, 0, 0, TYPE_COLOR_PICKER, List.of(
+			new Extension(colorKey, 0, 0, 0, TYPE_TOGGLE, List.of())
+		));
 	}
 
 	public boolean hasChildren() {
-		return !children.isEmpty();
+		return type == TYPE_NAV;
+	}
+
+	public boolean isColorPicker() {
+		return type == TYPE_COLOR_PICKER;
+	}
+
+	public boolean isTextInput() {
+		return type == TYPE_TEXT_INPUT;
+	}
+
+	private static Extension textInput(String toggleKey, String valueKey, int title) {
+		return new Extension(toggleKey, title, 0, 0, TYPE_TEXT_INPUT, List.of(
+			new Extension(valueKey, 0, 0, 0, TYPE_TOGGLE, List.of())
+		));
 	}
 }

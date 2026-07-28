@@ -360,7 +360,7 @@ public class Controller {
 				handler.removeCallbacks(hideControls);
 			}
 			boolean handled = detector.onTouchEvent(ev);
-			if (!handled && isFullscreen()) zoomListener.onTouch(ev);
+			if (!handled && isFullscreen() && !isLocked()) zoomListener.onTouch(ev);
 			if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
 				gestureListener.onTouchRelease();
 				if (longPress) {
@@ -490,7 +490,7 @@ public class Controller {
 
 		if (speedView != null) {
 			speedView.setOnClickListener(v -> {
-				float[] speeds = {0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f, 3f};
+				float[] speeds = getSpeedPresets();
 				String[] options = new String[speeds.length];
 				int checked = -1;
 				float speed = engine.getPlaybackRate();
@@ -505,6 +505,28 @@ public class Controller {
 				});
 			});
 		}
+	}
+
+	@NonNull
+	private float[] getSpeedPresets() {
+		if (extensionManager.isEnabled(com.hhst.youtubelite.extension.Constant.CUSTOM_SPEED_ENABLED)) {
+			String raw = extensionManager.getString(com.hhst.youtubelite.extension.Constant.CUSTOM_SPEED_VALUES);
+			if (raw != null && !raw.isEmpty()) {
+				String[] parts = raw.split(",");
+				float[] presets = new float[parts.length];
+				boolean valid = true;
+				for (int i = 0; i < parts.length; i++) {
+					try {
+						presets[i] = Float.parseFloat(parts[i].trim());
+					} catch (NumberFormatException e) {
+						valid = false;
+						break;
+					}
+				}
+				if (valid && presets.length > 0) return presets;
+			}
+		}
+		return new float[]{0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f, 3f};
 	}
 
 	@NonNull
@@ -673,22 +695,6 @@ public class Controller {
 				});
 			}
 
-			View pipOption = bottomSheetView.findViewById(R.id.option_pip);
-			if (pipOption != null) {
-				pipOption.setVisibility(extensionManager.isEnabled(Constant.ENABLE_PIP) ? View.VISIBLE : View.GONE);
-			}
-			setupBottomSheetOption(bottomSheetView, R.id.option_audio_track, b -> {
-				showAudioTrackOptions();
-				bottomSheetDialog.dismiss();
-			});
-			setupBottomSheetOption(bottomSheetView, R.id.option_pip, b -> {
-				playerView.enterPiP();
-				bottomSheetDialog.dismiss();
-			});
-			setupBottomSheetOption(bottomSheetView, R.id.option_stream_details, b -> {
-				showVideoDetails();
-				bottomSheetDialog.dismiss();
-			});
 			bottomSheetDialog.show();
 		});
 	}
@@ -1115,6 +1121,10 @@ public class Controller {
 
 	public boolean isFullscreen() {
 		return state.isFullscreen();
+	}
+
+	public boolean isLocked() {
+		return state.isLocked();
 	}
 
 	public boolean isControlsVisible() {

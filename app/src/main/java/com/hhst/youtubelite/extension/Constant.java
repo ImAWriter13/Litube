@@ -4,6 +4,7 @@ import static com.hhst.youtubelite.Constant.ENABLE_BACKGROUND_PLAY;
 import static com.hhst.youtubelite.Constant.ENABLE_HOME_BUTTON_PIP;
 import static com.hhst.youtubelite.Constant.ENABLE_IN_APP_MINI_PLAYER;
 import static com.hhst.youtubelite.Constant.ENABLE_PIP;
+import static com.hhst.youtubelite.Constant.ENABLE_PREMIUM_LOGO;
 import static com.hhst.youtubelite.Constant.REMEMBER_LAST_POSITION;
 import static com.hhst.youtubelite.Constant.REMEMBER_RESIZE_MODE;
 import static com.hhst.youtubelite.Constant.SKIP_POI_HIGHLIGHT;
@@ -20,7 +21,11 @@ public final class Constant {
 	public static final String ENABLE_DISPLAY_DISLIKES = "enable_display_dislikes";
 	public static final String ENABLE_HIDE_SHORTS = "enable_hide_shorts";
 	public static final String AMOLED_THEME = "amoled_theme";
+	public static final String AMOLED_CUSTOM_COLOR_ENABLED = "amoled_custom_color_enabled";
+	public static final String AMOLED_CUSTOM_COLOR = "amoled_custom_color";
 	public static final String DISABLE_AMBIENT = "disable_ambient";
+	public static final String CUSTOM_SPEED_ENABLED = "custom_speed_enabled";
+	public static final String CUSTOM_SPEED_VALUES = "custom_speed_values";
 	public static final String REMEMBER_QUALITY = "remember_quality";
 	public static final String REMEMBER_PLAYBACK_SPEED = "remember_playback_speed";
 	// Legacy key kept for migration only.
@@ -59,7 +64,10 @@ public final class Constant {
 					Map.entry(ENABLE_DISPLAY_DISLIKES, true),
 					Map.entry(ENABLE_HIDE_SHORTS, false),
 					Map.entry(AMOLED_THEME, false),
+					Map.entry(AMOLED_CUSTOM_COLOR_ENABLED, false),
 					Map.entry(DISABLE_AMBIENT, false),
+					Map.entry(CUSTOM_SPEED_ENABLED, false),
+					Map.entry(ENABLE_PREMIUM_LOGO, false),
 					Map.entry(SKIP_SPONSORS, true),
 					Map.entry(SKIP_SELF_PROMO, true),
 					Map.entry(SKIP_POI_HIGHLIGHT, true),
@@ -85,6 +93,14 @@ public final class Constant {
 					Map.entry(GESTURE_SEEK_FULLSCREEN, true),
 					Map.entry(GESTURE_FULLSCREEN_WINDOWED, true),
 					Map.entry(GESTURE_FULLSCREEN_FULLSCREEN, true)
+	);
+
+	public static final Map<String, String> DEFAULT_COLORS = Map.of(
+					AMOLED_CUSTOM_COLOR, "#39FF14"
+	);
+
+	public static final Map<String, String> DEFAULT_STRINGS = Map.of(
+					CUSTOM_SPEED_VALUES, "1.0,2.0,3.0,4.0"
 	);
 
 	private Constant() {

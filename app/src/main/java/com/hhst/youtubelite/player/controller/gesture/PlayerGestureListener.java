@@ -63,6 +63,10 @@ public class PlayerGestureListener extends GestureDetector.SimpleOnGestureListen
 		return DoubleTapAction.TOGGLE_PLAYBACK;
 	}
 
+	private boolean isLocked() {
+		return controller.isLocked();
+	}
+
 	private boolean enabled(@NonNull Gesture gesture) {
 		boolean fullscreen = controller.isFullscreen();
 		String key = switch (gesture) {
@@ -111,7 +115,7 @@ public class PlayerGestureListener extends GestureDetector.SimpleOnGestureListen
 
 	@Override
 	public boolean onDown(@NonNull MotionEvent e) {
-		if (!hasAnyEnabled()) return false;
+		if (!hasAnyEnabled() || isLocked()) return false;
 		handler.removeCallbacks(hideHint);
 		gestureMode = GestureMode.NONE;
 		brightness = -1;
@@ -124,7 +128,7 @@ public class PlayerGestureListener extends GestureDetector.SimpleOnGestureListen
 
 	@Override
 	public boolean onSingleTapUp(@NonNull MotionEvent e) {
-		if (!enabled(Gesture.DOUBLE_TAP)) return super.onSingleTapUp(e);
+		if (isLocked() || !enabled(Gesture.DOUBLE_TAP)) return super.onSingleTapUp(e);
 		long now = System.currentTimeMillis();
 		float x = e.getX();
 		float width = playerView.getWidth();
@@ -150,7 +154,7 @@ public class PlayerGestureListener extends GestureDetector.SimpleOnGestureListen
 
 	@Override
 	public boolean onDoubleTap(@NonNull MotionEvent e) {
-		if (!enabled(Gesture.DOUBLE_TAP)) return false;
+		if (isLocked() || !enabled(Gesture.DOUBLE_TAP)) return false;
 		switch (getDoubleTapAction(e.getX(), playerView.getWidth())) {
 			case SEEK_BACKWARD:
 				processSeek(true);
@@ -189,7 +193,7 @@ public class PlayerGestureListener extends GestureDetector.SimpleOnGestureListen
 
 	@Override
 	public boolean onScroll(MotionEvent e1, @NonNull MotionEvent e2, float dx, float dy) {
-		if (e1 == null || e2.getPointerCount() > 1 || longPressing) return false;
+		if (isLocked() || e1 == null || e2.getPointerCount() > 1 || longPressing) return false;
 		if (gestureMode == GestureMode.NONE) {
 			if (Math.abs(dy) > Math.abs(dx)) {
 				gestureMode = verticalMode(e1.getX(), playerView.getWidth());
@@ -269,7 +273,7 @@ public class PlayerGestureListener extends GestureDetector.SimpleOnGestureListen
 
 	@Override
 	public void onLongPress(@NonNull MotionEvent e) {
-		if (!enabled(Gesture.LONG_PRESS) || !engine.isPlaying()) return;
+		if (isLocked() || !enabled(Gesture.LONG_PRESS) || !engine.isPlaying()) return;
 		vibrate();
 		longPressSpeed = engine.getPlaybackRate();
 		longPressing = true;

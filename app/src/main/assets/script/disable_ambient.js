@@ -6,6 +6,7 @@
 
     let enabled = false;
     let styleEl = null;
+    let observer = null;
 
     function readEnabled() {
         try {
@@ -15,24 +16,24 @@
         }
     }
 
-    function disableViaSettings() {
+    function toggleAmbientSwitch() {
         if (!enabled) return;
-        const btn = document.querySelector('.ytp-settings-button');
-        if (!btn || btn.hasAttribute('data-lite-ambient-processed')) return;
-        btn.setAttribute('data-lite-ambient-processed', 'true');
-        btn.click();
-        setTimeout(() => {
-            const items = document.querySelectorAll('.ytp-menuitem[role="menuitemcheckbox"]');
-            for (const item of items) {
-                const label = item.querySelector('.ytp-menuitem-label');
-                if (label && label.textContent.trim().toLowerCase() === 'ambient mode') {
-                    if (item.getAttribute('aria-checked') === 'true') {
-                        item.click();
-                    }
-                }
+        const switches = document.querySelectorAll(
+            'switch-list-item-view-model button[role="switch"], ' +
+            'yt-switch-list-item-view-model button[role="switch"]'
+        );
+        for (const btn of switches) {
+            if (btn.hasAttribute('data-lite-ambient-done')) continue;
+            const item = btn.closest('yt-list-item-view-model, switch-list-item-view-model');
+            if (!item) continue;
+            const label = item.querySelector('.ytAttributedStringHost, .ytListItemViewModelTitle');
+            if (!label) continue;
+            if (!label.textContent.toLowerCase().includes('ambient')) continue;
+            if (btn.getAttribute('aria-checked') === 'true') {
+                btn.click();
             }
-            btn.click();
-        }, 500);
+            btn.setAttribute('data-lite-ambient-done', 'true');
+        }
     }
 
     function injectCSS() {
@@ -58,22 +59,38 @@
             styleEl.remove();
             styleEl = null;
         }
-        document.querySelectorAll('[data-lite-ambient-processed]').forEach(el => {
-            el.removeAttribute('data-lite-ambient-processed');
+    }
+
+    function startObserver() {
+        if (observer) observer.disconnect();
+        observer = new MutationObserver(() => {
+            if (enabled) toggleAmbientSwitch();
         });
+        if (document.body) {
+            observer.observe(document.body, { childList: true, subtree: true });
+        }
+    }
+
+    function stopObserver() {
+        if (observer) {
+            observer.disconnect();
+            observer = null;
+        }
     }
 
     function syncPreferences() {
         const next = readEnabled();
-        if (enabled === next) return;
+        if (enabled === next) {
+            if (enabled) toggleAmbientSwitch();
+            return;
+        }
         enabled = next;
         if (enabled) {
             injectCSS();
-            disableViaSettings();
-            const obs = new MutationObserver(() => disableViaSettings());
-            obs.observe(document.body, { childList: true, subtree: true });
-            setTimeout(() => obs.disconnect(), 30000);
+            toggleAmbientSwitch();
+            startObserver();
         } else {
+            stopObserver();
             removeCSS();
         }
     }
