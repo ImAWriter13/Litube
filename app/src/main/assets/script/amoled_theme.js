@@ -262,38 +262,40 @@
         if (el) el.remove();
     }
 
-    function syncPreferences() {
-        const prevEnabled = enabled;
-        const prevColorEnabled = customColorEnabled;
-        const prevColor = customColor;
-        readEnabled();
-
-        const colorChanged = prevColorEnabled !== customColorEnabled || prevColor !== customColor;
-
-        // AMOLED background
+    function ensureApplied() {
         if (enabled) {
-            if (!prevEnabled) applyOrCreate(AMOLED_STYLE_ID, buildAmoledCSS());
+            applyOrCreate(AMOLED_STYLE_ID, buildAmoledCSS());
         } else {
-            if (prevEnabled) removeStyle(AMOLED_STYLE_ID);
+            removeStyle(AMOLED_STYLE_ID);
         }
 
-        // Custom color (applicato quando AMOLED è attivo con colore default, o quando custom color è esplicitamente attivo)
         if (customColorEnabled) {
-            if (!prevColorEnabled || colorChanged) {
-                applyOrCreate(COLOR_STYLE_ID, buildColorCSS(customColor));
-            }
+            applyOrCreate(COLOR_STYLE_ID, buildColorCSS(customColor));
         } else if (enabled) {
-            // AMOLED attivo ma custom color disattivato: usa colore default #39FF14
-            if (prevColorEnabled || prevColor !== "#39FF14") {
-                applyOrCreate(COLOR_STYLE_ID, buildColorCSS("#39FF14"));
-            }
+            applyOrCreate(COLOR_STYLE_ID, buildColorCSS("#39FF14"));
         } else {
-            if (prevColorEnabled) removeStyle(COLOR_STYLE_ID);
+            removeStyle(COLOR_STYLE_ID);
         }
+    }
+
+    function syncPreferences() {
+        readEnabled();
+        ensureApplied();
     }
 
     window.addEventListener("litePreferencesChanged", syncPreferences, true);
     window.amoledTheme = { syncPreferences };
     window.amoledThemeInjected = true;
-    syncPreferences();
+    if (document.head) {
+        syncPreferences();
+    } else {
+        var ready = function () {
+            if (document.head) {
+                syncPreferences();
+            } else {
+                requestAnimationFrame(ready);
+            }
+        };
+        requestAnimationFrame(ready);
+    }
 })();
