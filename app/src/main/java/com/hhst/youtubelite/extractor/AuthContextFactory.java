@@ -30,6 +30,8 @@ public final class AuthContextFactory {
 		PoTokenWebViewContext page = store.getSnapshot();
 		String cookieUrl = page != null ? page.url() : url;
 		String cookies = normalize(CookieManager.getInstance().getCookie(cookieUrl));
+		boolean loggedInFromCookies = hasLoginCookie(cookies);
+		boolean loggedIn = (page != null && page.loggedIn()) || loggedInFromCookies;
 		return new AuthContext(
 						"webview",
 						cookies,
@@ -37,9 +39,24 @@ public final class AuthContextFactory {
 						page != null ? page.dataSyncId() : null,
 						page != null ? page.clientVersion() : null,
 						page != null ? page.sessionIndex() : null,
-						page != null && page.loggedIn(),
+						loggedIn,
 						page != null && page.premium(),
 						System.currentTimeMillis());
+	}
+
+	private boolean hasLoginCookie(@Nullable String cookies) {
+		// When the PoToken snapshot is not yet available (e.g. the user opens a
+		// video directly without first loading a watch page in the webview),
+		// we can still detect a logged-in YouTube session from the presence of
+		// the SAPISID/__Secure-3PAPISID cookies. This enables propagating the
+		// session to the innertube clients so that age-restricted videos are
+		// not gated as anonymous.
+		if (cookies == null || cookies.isEmpty()) {
+			return false;
+		}
+		return getCookieValue(cookies, "SAPISID") != null
+				|| getCookieValue(cookies, "__Secure-3PAPISID") != null
+				|| getCookieValue(cookies, "__Secure-1PAPISID") != null;
 	}
 
 	@Nullable

@@ -29,9 +29,35 @@ public final class YoutubeAuth {
 		if (auth == null || !auth.loggedIn()) {
 			return Result.none();
 		}
-		String origin = origin(url);
-		if (origin == null || !isWebApi(url)) {
+		if (!isWebApi(url)) {
 			return Result.none();
+		}
+		String origin = origin(url);
+		if (origin == null) {
+			return Result.none();
+		}
+		// YouTube validates the SAPISIDHASH and the CORS Origin against the
+		// "https://www.youtube.com" web context, even when the innertube
+		// request actually targets an alternate host such as
+		// "youtubei.googleapis.com" (used by the TVHTML5/ANDROID/IOS clients).
+		// Computing the hash with the request's own origin would silently turn
+		// the session into an anonymous one and re-trigger the age gate on
+		// age-restricted videos, so always anchor the auth context to the web
+		// origin for non-www innertube endpoints.
+		String authOrigin = origin;
+		String host;
+		try {
+			host = URI.create(url).getHost();
+		} catch (IllegalArgumentException ignored) {
+			host = null;
+		}
+		if (host != null) {
+			String lowerHost = host.toLowerCase(Locale.US);
+			if (!lowerHost.equals("www." + Constant.YOUTUBE_DOMAIN)
+					&& !lowerHost.equals("m." + Constant.YOUTUBE_DOMAIN)
+					&& !lowerHost.equals(Constant.YOUTUBE_DOMAIN)) {
+				authOrigin = "https://www." + Constant.YOUTUBE_DOMAIN;
+			}
 		}
 		String cookies = auth.cookies();
 		if (cookies == null || cookies.isBlank()) {
@@ -39,14 +65,14 @@ public final class YoutubeAuth {
 		}
 		Sync sync = sync(auth.dataSyncId());
 		String pageId = sync.pageId();
-		String authorization = authorization(cookies, origin, sync.userId(), nowMs / 1000L);
+		String authorization = authorization(cookies, authOrigin, sync.userId(), nowMs / 1000L);
 		if (authorization == null) {
 			return Result.skip("missing sid cookie");
 		}
 		Map<String, String> headers = new LinkedHashMap<>();
 		headers.put("Authorization", authorization);
-		headers.put("Origin", origin);
-		headers.put("X-Origin", origin);
+		headers.put("Origin", authOrigin);
+		headers.put("X-Origin", authOrigin);
 		if (auth.visitorData() != null) {
 			headers.put("X-Goog-Visitor-Id", auth.visitorData());
 		}
@@ -68,8 +94,17 @@ public final class YoutubeAuth {
 				return false;
 			}
 			String lowerHost = host.toLowerCase(Locale.US);
-			if (!lowerHost.equals(Constant.YOUTUBE_DOMAIN)
-							&& !lowerHost.endsWith("." + Constant.YOUTUBE_DOMAIN)) {
+			boolean isWebInnertube =
+					lowerHost.equals(Constant.YOUTUBE_DOMAIN)
+							|| lowerHost.endsWith("." + Constant.YOUTUBE_DOMAIN);
+			// NewPipeExtractor's TVHTML5/ANDROID/IOS clients post innertube
+			// requests to "youtubei.googleapis.com"; those endpoints honour a
+			// web auth context (SAPISIDHASH + web cookies) too, so treat them
+			// as web API to propagate the logged-in session. This is what
+			// allows age-restricted videos to be extracted under a logged-in
+			// (adult) account instead of being gated as anonymous.
+			boolean isGenericInnertube = lowerHost.equals("youtubei.googleapis.com");
+			if (!isWebInnertube && !isGenericInnertube) {
 				return false;
 			}
 			String path = uri.getPath();
